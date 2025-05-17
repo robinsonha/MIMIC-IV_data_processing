@@ -2,7 +2,7 @@
 # R code for regex processing clinical notes to identify pregnant preeclampsia patients
 library(tidyverse)
 library(stringr)
-#RUN THIS SCRIPT AFTER THE STRUCTURED DATA SCRIPT IF ANALYSING BOTH
+#RUN THIS SCRIPT BEFORE THE STRUCTURED DATA SCRIPT IF ANALYSING BOTH
 
 pregnant_pats<-readRDS("pregnant_patient_encounters.rds")
 structured_pats<-read.csv("preeclampsia_structured.csv") # results are formatted differently if joining to structured records
