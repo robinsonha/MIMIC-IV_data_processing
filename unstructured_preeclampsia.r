@@ -29,7 +29,7 @@ analyze_clinical_notes <- function(notes_data) {
     "seizure", "headache", "visual disturbance", "RUQ pain",
     "right upper quadrant pain", "proteinuria", "protein in urine", "altered mental status",
     "preeclampsia", "pre-eclampsia", "eclampsia", "HELLP", "edema",
-    "swelling", "BP", "blood pressure"
+    "swelling"
   )
 
   # Function to check if text contains any keywords
@@ -163,6 +163,6 @@ analyze_clinical_notes <- function(notes_data) {
 # # View target patients (pregnant patients with preeclampsia symptoms)
 nrow(results)
 head(results)
-
-pregnant_all<-right_join(patients,results,by=c("subject_id"))
+pregnant_all<-merge(patients,results,by=c("subject_id"))
 write.csv(pregnant_all, "pregnant_unstructured.csv", row.names = FALSE)
+
