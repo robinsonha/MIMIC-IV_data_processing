@@ -1,3 +1,5 @@
+#run after the unstructured_preeclampsia script if analysing both structured and unstructured data
+
 # Load necessary libraries
 library(dplyr)
 library(tidyr)
