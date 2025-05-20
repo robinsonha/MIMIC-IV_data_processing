@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 library(stringr)
 
-pregnant_pats<-readRDS("pregnant_patients2.rds")
+pregnant_pats<-readRDS("pregnant_patients.rds")
 patients <- read.csv("patients.csv")
 patients<-patients[patients$subject_id %in% pregnant_pats$subject_id,]
 
