@@ -36,7 +36,7 @@ rm(procedures_icd)
 d_labitems<-readRDS("d_labitems.rds")
 
   # 3. Lab tests
-  pregnancy_items <- d_labitems %>%
+pregnancy_items <- d_labitems %>%
     filter(str_detect(tolower(label), "pregnan") ) %>%
     pull(itemid)
 rm(d_labitems)
@@ -104,7 +104,8 @@ find_keywords <- function(text, keywords) {
 #rm(notes_data)
 
   # Combine all
-pregnancy_women<-bind_rows(pregnant_dx, pregnant_proc, pregnant_labs) %>%
+pregnant_pats<-bind_rows(pregnant_dx, pregnant_proc, pregnant_labs) %>%
     distinct(subject_id,hadm_id) %>%
     arrange(subject_id,hadm_id)
-saveRDS(pregnancy_women)
+saveRDS(pregnant_pats,"pregnant_patient_encounters.rds")
+write.csv(pregnant_pats,"pregnant_patient_encounters.csv")
