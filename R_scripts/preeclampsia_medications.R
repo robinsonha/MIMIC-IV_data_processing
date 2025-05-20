@@ -22,11 +22,15 @@ library(doParallel)
 #py_install("transformers") #Enables the python chunk
 #py_install("torch") #Enables the python chunk
 
-cohort<-read.csv("preeclampsia_all.csv")
+cohort<-pregnant_pats
 
 ########################################################################################################
 
-meds_list<-c("probenecid", "pegloticase", "allopurinol", "febuxostat")
+meds_list<-c("probenecid", "pegloticase", "allopurinol", "febuxostat","oxytocin", "magnesium sulfate", "misoprostol", "dexamethasone",
+             "penicillin", "terbutaline", "betamethasone", "bupivacaine",
+             "ropivacaine", "fentanyl", "indomethacin", "rho(d) immune globulin",
+             "rho immune globulin", "labetalol", "nifedipine", "hydralazine",
+             "tranexamic acid", "carboprost", "dinoprostone")
 
 prescriptions<-read.csv("prescriptions.csv")
 prescriptions<-prescriptions[prescriptions$subject_id %in% cohort$subject_id,]
@@ -51,6 +55,40 @@ rm(prescriptions)
 presc_meds<-ad[!is.na(ad$drug),]
 #presc_meds<-presc_meds %>%
  # select("subject_id","hadm_id","starttime","drug")
+########
+# 2. Get medications from EMAR table (new addition)
+emar <- read.csv("emar.csv")
+emar <- emar[emar$subject_id %in% cohort$subject_id,]
+emar$medication <- tolower(emar$medication)
+
+# Initialize dataframe
+emar_meds <- NULL
+for(i in 1:length(meds_list)){
+  eval(parse(text=paste0("ac <- emar[grepl(\"", meds_list[i], "\", emar$medication),]")))
+  if(!is.null(emar_meds)){
+    if(!is.null(ac) && nrow(ac) > 0){
+      emar_meds <- rbind(emar_meds, ac)
+    }
+  } else {
+    if(!is.null(ac) && nrow(ac) > 0){
+      emar_meds <- ac
+    }
+  }
+}
+rm(emar)
+
+# Standardize EMAR columns to match prescriptions format
+if(!is.null(emar_meds) && nrow(emar_meds) > 0){
+  emar_meds <- emar_meds %>%
+    rename(drug = medication,
+           starttime = charttime) %>%
+    select(subject_id, hadm_id, starttime, drug)
+  emar_meds$prod_strength <- NA
+  emar_meds$dose_unit_rx <- NA
+  emar_meds$doses_per_24_hrs <- NA
+  emar_meds$route <- NA
+}
+saveRDS(emar_meds,"emar_meds_preeclampsia.rds")
 
 saveRDS(presc_meds,"presc_meds_preeclampsia.rds")
 
@@ -88,13 +126,12 @@ drugs_only$expr<-tolower(drugs_only$expr)
 table(drugs_only$expr)
 
 drugs_only<-drugs_only %>%
-  select("hadm_id","charttime","expr")
+  select("hadm_id","charttime","expr") %>%
+  left_join(pregnant_pats)
 
-admissions_s<-admissions[,c("subject_id","hadm_id")]
-drugs_only<-left_join(drugs_only,admissions_s)
 drugs_only$drug<-drugs_only$expr
 drugs_only$starttime<-drugs_only$charttime
-drugs_only<-drugs_only[drugs_only$subject_id %in% cohort$subject_id ,]
+drugs_only<-drugs_only[drugs_only$hadm_id %in% pregnant_pats$hadm_id ,]
 
 drugs_only<-drugs_only %>%
   select("subject_id","hadm_id","starttime","drug")
@@ -105,9 +142,12 @@ drugs_only$route<-NA
 
 presc_meds<-presc_meds %>%
   select("subject_id","hadm_id","starttime","drug","prod_strength","dose_unit_rx","doses_per_24_hrs", "route")
-
+# Add EMAR medications if they exist
+if(!is.null(emar_meds) && nrow(emar_meds) > 0){
+  presc_meds <- rbind(presc_meds, emar_meds)
+}
 presc_meds<-rbind(presc_meds,drugs_only)
-presc_meds$starttime<-as.POSIXct(presc_meds$starttime)
+#presc_meds$starttime<-as.POSIXct(presc_meds$starttime)
 
 
 #There are lots of synonyms for the same medication in the drugs field so combine the similar ones:
@@ -135,3 +175,53 @@ presc_meds$drug<-gsub("nf ","",presc_meds$drug)
 presc_meds$drug <-gsub(".*:","",presc_meds$drug)
 
 write.csv(presc_meds,"preeclampsia_medications.csv")
+
+
+
+
+
+## List of drugs to create binary columns for
+drugs_to_flag <- c("probenecid", "pegloticase", "allopurinol", "febuxostat","oxytocin", "magnesium sulfate", "misoprostol", "dexamethasone",
+                   "penicillin", "terbutaline", "betamethasone", "bupivacaine",
+                   "ropivacaine", "fentanyl", "indomethacin", "rho(d) immune globulin",
+                   "rho immune globulin", "labetalol", "nifedipine", "hydralazine",
+                   "tranexamic acid", "carboprost", "dinoprostone")
+
+# Convert drug names to lowercase for case-insensitive matching
+presc_meds$drug_lower <- tolower(presc_meds$drug)
+
+# Create binary columns for each drug
+for (drug in drugs_to_flag) {
+  # Clean drug name for column name
+  col_name <- gsub("[^a-zA-Z0-9]", "_", tolower(drug))
+  col_name <- gsub("_+", "_", col_name)  # Replace multiple underscores with one
+  col_name <- gsub("_$|^_", "", col_name)  # Remove leading/trailing underscores
+
+  # Create binary column (1 if drug is found, 0 otherwise)
+  presc_meds[[col_name]] <- as.integer(grepl(drug, presc_meds$drug_lower, ignore.case = TRUE))
+}
+
+# Remove temporary lowercase column
+presc_meds$drug_lower <- NULL
+
+# Aggregate by subject_id to get patient-level medication flags
+patient_meds <- presc_meds %>%
+  group_by(subject_id,hadm_id) %>%
+  summarise(
+    across(ends_with("_immune_globulin"), ~ as.integer(any(. == 1)), .names = "{.col}"),
+    across(c(oxytocin:tranexamic_acid, carboprost:dinoprostone), ~ as.integer(any(. == 1)), .names = "{.col}")
+  ) %>%
+  distinct()
+
+# For rho immune globulin, combine both spellings
+if ("rho_d_immune_globulin" %in% names(patient_meds) && "rho_immune_globulin" %in% names(patient_meds)) {
+  patient_meds$rho_immune_globulin <- as.integer(patient_meds$rho_d_immune_globulin | patient_meds$rho_immune_globulin)
+  patient_meds$rho_d_immune_globulin <- NULL
+}
+
+# Merge 
+cohort <- left_join(presc_meds, patient_meds)
+
+# Save the updated cohort
+write.csv(cohort, "preeclampsia_medications.csv", row.names = FALSE)
+saveRDS(cohort, "preeclampsia_medications.rds")
