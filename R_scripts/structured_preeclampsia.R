@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 library(stringr)
 
-pregnant_pats<-readRDS("pregnant_patient_encounters.rds")
+pregnant_pats<-readRDS("pregnant_patients2.rds")
 patients <- read.csv("patients.csv")
 patients<-patients[patients$subject_id %in% pregnant_pats$subject_id,]
 
@@ -40,15 +40,15 @@ admissions$mortality5<-ifelse(!is.na(admissions$survival_days) & admissions$surv
 #Identify admissions with preeclampsia diagnoses
 preeclampsia_dx <- diagnoses_icd %>%
   filter(
-
+    
     (icd_version == 10 &
-    str_starts(icd_code, "O13|O14|O15|O11") ) |
-    (icd_version == 9 &
-    str_starts(icd_code, "6420|6424|6425|6426|6427|6430|4019") )
-     # Broad preeclampsia codes
+       str_starts(icd_code, "O13|O14|O15|O11") ) |
+      (icd_version == 9 &
+         str_starts(icd_code, "6420|6424|6425|6426|6427|6430|4019") )
+    # Broad preeclampsia codes
   ) %>%
   left_join(admissions, by = c("hadm_id","subject_id")) %>%
-#  left_join(patients, by = "subject_id") %>%
+  #  left_join(patients, by = "subject_id") %>%
   mutate(
     # Classify preeclampsia type
     preeclampsia_type = case_when(
@@ -64,44 +64,15 @@ preeclampsia_dx <- diagnoses_icd %>%
       str_starts(icd_code, "642.7") ~ "Superimposed preeclampsia", # ICD-9 equivalent for O11
       TRUE ~ "Other"
     ),
-     # Convert dates for timing analysis
+    # Convert dates for timing analysis
     admittime = ymd_hms(admittime),
     dischtime = ymd_hms(dischtime)
   )
 rm(admissions)
 rm(diagnoses_icd)
 
-#procedures_icd <- readRDS("procedures_icd.rds")
-
-#Identify delivery procedures (for timing)
-#I have tried to implement this but it is not recovering delivery, we may not have capture of obstetrics.
-#delivery_procedures <- procedures_icd %>%
-#  filter(
- #   str_starts(icd_code, "O6|O7|O8")  #Broad delivery codes
-#  ) %>%
- # mutate(procedure_date = ymd_hms(chartdate))  # Assuming chartdate exists
-
-#Determine timing (postpartum?)
-#preeclampsia <- preeclampsia_dx %>%
- # left_join(delivery_procedures, by = "hadm_id") %>%
-#  mutate(
- #   diagnosis_timing = case_when(
-  #    !is.na(procedure_date) & admittime < procedure_date ~ "Antepartum",
-   #   !is.na(procedure_date) & admittime >= procedure_date ~ "Postpartum",
-    #  TRUE ~ "Unknown"
-#    )
-#  ) %>%
- # select(
-#    subject_id, hadm_id,
- #   icd_code, preeclampsia_type,
-  #  admittime, dischtime,
-   # diagnosis_timing, gender, anchor_age
-  #)
 preeclampsia_dx$preeclampsia_structured<-1
-
 write.csv(preeclampsia_dx,"preeclampsia_structured.csv")
-
-preeclampsia_dx$preeclampsia_structured<-1
 
 ##########################
 pregnant_pats<-readRDS("pregnant_patient_encounters.rds")
@@ -112,9 +83,14 @@ pregnant_unstructured<-read.csv("preeclampsia_unstructured.csv")
 #preeclampsia_dx<-read.csv("preeclampsia_structured.csv")
 
 pregnant_encounters<-left_join(pregnant_pats,patients)
+pregnant_encounters<-pregnant_encounters %>%
+  select(-'gender')
 pregnant_encounters<-left_join(pregnant_encounters,pregnant_unstructured)
-pregnant_encounters$preeclampsia<-ifelse(pregnant_encounters$preeclampsia_structured==1|pregnant_encounters$has_preeclampsia_symptoms==TRUE,1,0)
-pregnant_all<-left_join(pregnant_encounters,preeclampsia_dx) %>%
-left_join(admissions, by = c("hadm_id","subject_id")) %>%
-  
-write.csv(pregnant_all,"pregnant_patients2.csv")
+pregnant_encounters<-pregnant_encounters %>%
+  select(-'gender')
+pregnant_all<-left_join(pregnant_encounters,preeclampsia_dx) 
+pregnant_all$preeclampsia<-ifelse(pregnant_all$preeclampsia_structured==1|
+                                           pregnant_all$has_preeclampsia_symptoms==TRUE,1,0)
+
+write.csv(pregnant_all,"pregnant_patient_encounters.csv")
+
