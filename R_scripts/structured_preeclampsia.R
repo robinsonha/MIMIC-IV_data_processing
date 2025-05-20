@@ -117,4 +117,4 @@ pregnant_encounters$preeclampsia<-ifelse(pregnant_encounters$preeclampsia_struct
 pregnant_all<-left_join(pregnant_encounters,preeclampsia_dx) %>%
 left_join(admissions, by = c("hadm_id","subject_id")) %>%
   
-write.csv(pregnant_all,"pregnant_patients_all.csv")
+write.csv(pregnant_all,"pregnant_patients2.csv")
