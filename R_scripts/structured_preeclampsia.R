@@ -100,3 +100,21 @@ rm(diagnoses_icd)
 preeclampsia_dx$preeclampsia_structured<-1
 
 write.csv(preeclampsia_dx,"preeclampsia_structured.csv")
+
+preeclampsia_dx$preeclampsia_structured<-1
+
+##########################
+pregnant_pats<-readRDS("pregnant_patient_encounters.rds")
+patients <- read.csv("patients.csv")
+patients<-patients[patients$subject_id %in% pregnant_pats$subject_id,]
+
+pregnant_unstructured<-read.csv("preeclampsia_unstructured.csv")
+#preeclampsia_dx<-read.csv("preeclampsia_structured.csv")
+
+pregnant_encounters<-left_join(pregnant_pats,patients)
+pregnant_encounters<-left_join(pregnant_encounters,pregnant_unstructured)
+pregnant_encounters$preeclampsia<-ifelse(pregnant_encounters$preeclampsia_structured==1|pregnant_encounters$has_preeclampsia_symptoms==TRUE,1,0)
+pregnant_all<-left_join(pregnant_encounters,preeclampsia_dx) %>%
+left_join(admissions, by = c("hadm_id","subject_id")) %>%
+  
+write.csv(pregnant_all,"pregnant_patients_all.csv")
