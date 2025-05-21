@@ -20,23 +20,6 @@ diagnoses_icd<-dplyr::left_join(diagnoses_icd,diagnoses_icd_detail,by=c("icd_cod
 Hx<-diagnoses_icd[grep(x = diagnoses_icd$icd_code, pattern = "^(I05|I06|I07|I08|I09|I1|I2|Z867|4106|4107|4108|4109|4273|4289|430|431|433|434|4284|4283|4282|4281|4280)"),]
 diagnoses_icd$Hx_CVD<-ifelse(diagnoses_icd$subject_id %in% Hx$subject_id,1,0)
 
-admissions <- readRDS("admissions.rds")
-admissions<-dplyr::left_join(admissions,patients)
-
-#Use anchor year key from patients to create time dependent variables in admissions
-admissions$admittime<-strptime(admissions$admittime, "%Y-%m-%d %H:%M:%S")
-admissions$dischtime<-strptime(admissions$dischtime, "%Y-%m-%d %H:%M:%S")
-admissions$type<-ifelse(admissions$admission_type %in% c("AMBULATORY OBSERVATION", "DIRECT EMER.", "URGENT", "EW EMER.", "DIRECT OBSERVATION", "EU OBSERVATION", "OBSERVATION ADMIT"),"Emergency","Elective")
-admissions$los<-as.numeric(difftime(admissions$dischtime, admissions$admittime, units="days"))
-admissions$date_of_death<-as.Date(admissions$dod)
-admissions$date_of_discharge<-as.Date(admissions$dischtime)
-admissions$age<-as.numeric(format(admissions$admittime,"%Y"))-admissions$anchor_year+admissions$anchor_age
-
-admissions$survival_days<-ifelse(!is.na(admissions$date_of_death),admissions$los,NA)
-admissions$mortality1<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<366,1,0)
-admissions$mortality6<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<183,1,0)
-admissions$mortality5<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<1826,1,0)
-
 #Identify admissions with preeclampsia diagnoses
 preeclampsia_dx <- diagnoses_icd %>%
   filter(
@@ -47,7 +30,7 @@ preeclampsia_dx <- diagnoses_icd %>%
          str_starts(icd_code, "6420|6424|6425|6426|6427|6430|4019") )
     # Broad preeclampsia codes
   ) %>%
-  left_join(admissions, by = c("hadm_id","subject_id")) %>%
+#  left_join(admissions, by = c("hadm_id","subject_id")) %>%
   #  left_join(patients, by = "subject_id") %>%
   mutate(
     # Classify preeclampsia type
@@ -65,10 +48,10 @@ preeclampsia_dx <- diagnoses_icd %>%
       TRUE ~ "Other"
     ),
     # Convert dates for timing analysis
-    admittime = ymd_hms(admittime),
-    dischtime = ymd_hms(dischtime)
-  )
-rm(admissions)
+#    admittime = ymd_hms(admittime),
+#    dischtime = ymd_hms(dischtime)
+ # )
+#rm(admissions)
 rm(diagnoses_icd)
 
 preeclampsia_dx$preeclampsia_structured<-1
