@@ -107,5 +107,24 @@ find_keywords <- function(text, keywords) {
 pregnant_pats<-bind_rows(pregnant_dx, pregnant_proc, pregnant_labs) %>%
     distinct(subject_id,hadm_id) %>%
     arrange(subject_id,hadm_id)
+
+admissions <- readRDS("admissions.rds")
+admissions<-dplyr::left_join(pregnant_pats,admissions)
+
+#Use anchor year key from patients to create time dependent variables in admissions
+admissions$admittime<-strptime(admissions$admittime, "%Y-%m-%d %H:%M:%S")
+admissions$dischtime<-strptime(admissions$dischtime, "%Y-%m-%d %H:%M:%S")
+admissions$type<-ifelse(admissions$admission_type %in% c("AMBULATORY OBSERVATION", "DIRECT EMER.", "URGENT", "EW EMER.", "DIRECT OBSERVATION", "EU OBSERVATION", "OBSERVATION ADMIT"),"Emergency","Elective")
+admissions$los<-as.numeric(difftime(admissions$dischtime, admissions$admittime, units="days"))
+admissions$date_of_death<-as.Date(admissions$dod)
+admissions$date_of_discharge<-as.Date(admissions$dischtime)
+admissions$age<-as.numeric(format(admissions$admittime,"%Y"))-admissions$anchor_year+admissions$anchor_age
+
+admissions$survival_days<-ifelse(!is.na(admissions$date_of_death),admissions$los,NA)
+admissions$mortality1<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<366,1,0)
+admissions$mortality6<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<183,1,0)
+admissions$mortality5<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<1826,1,0)
+rm(admissions)
+
 saveRDS(pregnant_pats,"pregnant_patient_encounters.rds")
 write.csv(pregnant_pats,"pregnant_patient_encounters.csv")
