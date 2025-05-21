@@ -1,3 +1,4 @@
+#If using unstructured indications, run that script first
 # Load required libraries
 library(dplyr)
 library(readr)
