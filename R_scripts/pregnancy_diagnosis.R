@@ -126,5 +126,8 @@ admissions$mortality6<-ifelse(!is.na(admissions$survival_days) & admissions$surv
 admissions$mortality5<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<1826,1,0)
 rm(admissions)
 
+patients<-read.csv("patients.csv")
+pregnant_pats<-left_join(pregnant_pats,patients)
+rm(patients)
 saveRDS(pregnant_pats,"pregnant_patient_encounters.rds")
 write.csv(pregnant_pats,"pregnant_patient_encounters.csv")
