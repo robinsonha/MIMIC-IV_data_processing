@@ -118,19 +118,24 @@ admissions$type<-ifelse(admissions$admission_type %in% c("AMBULATORY OBSERVATION
 admissions$los<-as.numeric(difftime(admissions$dischtime, admissions$admittime, units="days"))
 admissions$date_of_death<-as.Date(admissions$deathtime)
 admissions$date_of_discharge<-as.Date(admissions$dischtime)
+admissions$subject_id<-as.factor(admissions$subject_id)
+pregnant_pats$subject_id<-as.factor(pregnant_pats$subject_id)
+pregnant_pats$hadm_id<-as.factor(pregnant_pats$hadm_id)
+admissions$hadm_id<-as.factor(admissions$hadm_id)
+
 pregnant_pats<-left_join(pregnant_pats,admissions)
 rm(admissions)
 
 patients<-read.csv("patients.csv")
+patients$subject_id<-as.factor(patients$subject_id)
 pregnant_pats<-left_join(pregnant_pats,patients)
 rm(patients)
 
-admissions$age<-as.numeric(format(admissions$admittime,"%Y"))-admissions$anchor_year+admissions$anchor_age
-
-admissions$survival_days<-ifelse(!is.na(admissions$date_of_death),admissions$los,NA)
-admissions$mortality1<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<366,1,0)
-admissions$mortality6<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<183,1,0)
-admissions$mortality5<-ifelse(!is.na(admissions$survival_days) & admissions$survival_days<1826,1,0)
+pregnant_pats$age<-as.numeric(format(pregnant_pats$admittime,"%Y"))-pregnant_pats$anchor_year+pregnant_pats$anchor_age
+pregnant_pats$survival_days<-ifelse(!is.na(pregnant_pats$date_of_death),pregnant_pats$los,NA)
+pregnant_pats$mortality1<-ifelse(!is.na(pregnant_pats$survival_days) & pregnant_pats$survival_days<366,1,0)
+pregnant_pats$mortality6<-ifelse(!is.na(pregnant_pats$survival_days) & pregnant_pats$survival_days<183,1,0)
+pregnant_pats$mortality5<-ifelse(!is.na(pregnant_pats$survival_days) & pregnant_pats$survival_days<1826,1,0)
 
 saveRDS(pregnant_pats,"pregnant_patient_encounters.rds")
 write.csv(pregnant_pats,"pregnant_patient_encounters.csv")
