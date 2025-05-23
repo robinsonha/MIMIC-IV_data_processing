@@ -1,4 +1,4 @@
-cohort<-read.csv("preeclampsia_all.csv")
+cohort<-read.csv("pregnant_patient_encounters.csv")
 
 #omr table is the Online Medical Record 
 #blood pressure, height, weight, body mass index, and Estimated Glomerular Filtration Rate (eGFR). 
