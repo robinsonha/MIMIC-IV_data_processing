@@ -5,7 +5,7 @@ library(stringr)
 #RUN THIS SCRIPT BEFORE THE STRUCTURED DATA SCRIPT IF ANALYSING BOTH
 
 pregnant_pats<-readRDS("pregnant_patient_encounters.rds")
-structured_pats<-read.csv("preeclampsia_structured.csv") # results are formatted differently if joining to structured records
+#structured_pats<-read.csv("preeclampsia_structured.csv") # results are formatted differently if joining to structured records
 patients <- read.csv("patients.csv")
 patients<-patients[patients$subject_id %in% pregnant_pats$subject_id,]
 notes_data <- read.csv("discharge.csv", stringsAsFactors = FALSE)
