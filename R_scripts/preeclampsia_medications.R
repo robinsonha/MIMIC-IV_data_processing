@@ -1,4 +1,4 @@
-predata<-read.csv("preeclampsia_all.csv")
+predata<-read.csv("pregnant_patient_encounters.csv")
 
 #In addition to looking for the structured medications, the unstructured_preeclampsia script will also search for structured medication indications
 #Current selection: probenecid, pegloticase, allopurinol, febuxostat.
