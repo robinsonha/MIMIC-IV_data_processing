@@ -47,11 +47,11 @@ preeclampsia_dx <- diagnoses_icd %>%
       str_starts(icd_code, "642.6") ~ "Eclampsia",                # ICD-9 equivalent for O15
       str_starts(icd_code, "642.7") ~ "Superimposed preeclampsia", # ICD-9 equivalent for O11
       TRUE ~ "Other"
-    ),
+    )
     # Convert dates for timing analysis
 #    admittime = ymd_hms(admittime),
 #    dischtime = ymd_hms(dischtime)
- # )
+  )
 #rm(admissions)
 rm(diagnoses_icd)
 
