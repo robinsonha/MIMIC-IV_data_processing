@@ -1,5 +1,5 @@
 
-cohort<-read.csv("preeclampsia_all.csv")
+cohort<-read.csv("pregnant_patient_encounters.csv")
 
 library(dplyr) #Table reshaping
 library(comorbidity) #Calculating comorbidity indices
