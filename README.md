@@ -1,5 +1,6 @@
 # MIMIC-IV_data_processing
 MIMIC IV data processing to extract key variables and assemble cohorts
+pregnant_patients.csv is the primary patient table
 
 Guide to raw data:
 
