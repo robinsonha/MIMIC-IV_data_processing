@@ -1,4 +1,4 @@
-cohort<-read.csv("preeclampsia_all.csv")
+cohort<-read.csv("pregnant_patient_encounters.csv")
 
 admissions<-readRDS("admissions.rds")
 admissions<-admissions[admissions$subject_id %in% cohort$subject_id,]
