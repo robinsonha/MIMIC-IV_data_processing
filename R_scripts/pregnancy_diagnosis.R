@@ -22,6 +22,7 @@ pregnant_dx <- diagnoses_icd %>%
     ) %>%
     distinct(subject_id,hadm_id)
 rm(diagnoses_icd)
+pregnant_dx$pregnancy_indication<-"diagnosis"
 
 procedures_icd<-readRDS("procedures_icd.rds")
 
@@ -32,6 +33,8 @@ pregnant_proc <- procedures_icd %>%
     ) %>%
     distinct(subject_id,hadm_id)
 rm(procedures_icd)
+pregnant_proc$pregnancy_indication<-"procedure"
+
 
 d_labitems<-readRDS("d_labitems.rds")
 
@@ -40,6 +43,8 @@ pregnancy_items <- d_labitems %>%
     filter(str_detect(tolower(label), "pregnan") ) %>%
     pull(itemid)
 rm(d_labitems)
+pregnancy_items$pregnancy_indication<-"items"
+
 
 labevents<-read.csv("labevents.csv")
 
@@ -47,6 +52,7 @@ pregnant_labs <- labevents %>%
     filter(itemid %in% pregnancy_items & valuenum == 1) %>%
     distinct(subject_id,hadm_id)
 rm(labevents)
+pregnancy_labs$pregnancy_indication<-"labs"
 
 pregnancy_keywords <- c(
   "pregnant", "pregnancy", "gestation", "trimester", "gravid",
@@ -103,10 +109,14 @@ find_keywords <- function(text, keywords) {
   #distinct(subject_id,hadm_id)
 #rm(notes_data)
 
-  # Combine all
-pregnant_pats<-bind_rows(pregnant_dx, pregnant_proc, pregnant_labs) %>%
-    distinct(subject_id,hadm_id) %>%
-    arrange(subject_id,hadm_id)
+  # Combine all so we have one row per encounter but retain info on the pregnancy indication:
+pregnant_pats <- bind_rows(pregnant_dx, pregnant_proc, pregnant_labs) %>%
+  group_by(subject_id, hadm_id) %>%
+  summarize(
+    pregnancy_indication = str_c(unique(pregnancy_indication), collapse = "_"),  # use an underscore separator
+    .groups = "drop"  # Avoid grouped output
+  ) %>%
+  arrange(subject_id, hadm_id)
 
 admissions <- readRDS("admissions.rds")
 admissions<-dplyr::left_join(pregnant_pats,admissions)
