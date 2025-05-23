@@ -65,13 +65,24 @@ patients<-patients[patients$subject_id %in% pregnant_pats$subject_id,]
 
 pregnant_unstructured<-read.csv("preeclampsia_unstructured.csv")
 #preeclampsia_dx<-read.csv("preeclampsia_structured.csv")
+pregnant_pats$subject_id<-as.factor(pregnant_pats$subject_id)
+patients$subject_id<-as.factor(patients$subject_id)
 
 pregnant_encounters<-left_join(pregnant_pats,patients)
 pregnant_encounters<-pregnant_encounters %>%
   select(-'gender')
+pregnant_encounters$subject_id<-as.factor(pregnant_encounters$subject_id)
+pregnant_unstructured$subject_id<-as.factor(pregnant_unstructured$subject_id)
+pregnant_encounters$hadm_id<-as.factor(pregnant_encounters$hadm_id)
+pregnant_unstructured$hadm_id<-as.factor(pregnant_unstructured$hadm_id)
+
 pregnant_encounters<-left_join(pregnant_encounters,pregnant_unstructured)
 pregnant_encounters<-pregnant_encounters %>%
   select(-'gender')
+
+preeclampsia_dx$subject_id<-as.factor(preeclampsia_dx$subject_id)
+preeclampsia_dx$hadm_id<-as.factor(preeclampsia_dx$hadm_id)
+
 pregnant_all<-left_join(pregnant_encounters,preeclampsia_dx) 
 pregnant_all$preeclampsia<-ifelse(pregnant_all$preeclampsia_structured==1|
                                            pregnant_all$has_preeclampsia_symptoms==TRUE,1,0)
