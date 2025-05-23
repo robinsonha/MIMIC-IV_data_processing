@@ -2,10 +2,15 @@
 MIMIC IV data processing to extract key variables and assemble cohorts
 
 pregnant_patients.csv is the primary patient table, containing all pregnant patients identified in pregnant_patient_encounters, linked to preeclampsia indications
+
 preeclampsia_prescriptions contains prescriptions of interest for all of the patients in pregnant_patients.csv
+
 preeclampsia_observations contains all observations for all of the patients in pregnant_patients.csv
+
 preeclampsia_transfers follows the patient journey between wards for all of the patients in pregnant_patients.csv
+
 preeclampsia_labs contains all lab values for all of the patients in pregnant_patients.csv
+
 
 Guide to raw data:
 
