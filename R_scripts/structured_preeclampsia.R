@@ -6,7 +6,7 @@ library(lubridate)
 library(tidyr)
 library(stringr)
 
-pregnant_pats<-readRDS("pregnant_patients.rds")
+pregnant_pats<-readRDS("pregnant_patient_encounters.rds")
 patients <- read.csv("patients.csv")
 patients<-patients[patients$subject_id %in% pregnant_pats$subject_id,]
 
@@ -76,5 +76,5 @@ pregnant_all<-left_join(pregnant_encounters,preeclampsia_dx)
 pregnant_all$preeclampsia<-ifelse(pregnant_all$preeclampsia_structured==1|
                                            pregnant_all$has_preeclampsia_symptoms==TRUE,1,0)
 
-write.csv(pregnant_all,"pregnant_patient_encounters.csv")
+write.csv(pregnant_all,"pregnant_patients.csv")
 
